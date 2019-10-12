@@ -1,0 +1,82 @@
+computePolynomial:
+pushq %rbp
+movq %rsp, %rbp
+
+movq $0, %rax		#initialize result register
+
+# (coefX * x^5) – (coefY * y^4) – (coefZ * z^3)
+movl %ecx, %eax		#EAX = X
+imull %eax, %eax	#EAX = X*X
+imull %eax, %eax	#EAX = X^4
+imull %ecx, %eax 	#EAX = X^5
+imull %edi, %eax	#EAX = coefX * X^5
+
+movl %r8d, %r10d	#R10D = Y
+imull %r10d, %r10d 	#R10D = Y^2
+imull %r10d, %r10d 	#R10D = Y^4
+imull %esi, %r10d 	#R10D = coefY * Y^4
+subl %r10d, %eax 	#EAX = coefX *X^5 - coefY *Y^4
+
+movl %r9d, %r10d 	#R10D = Z
+imull %r10d, %r10d 	#R10D = Z^2
+imull %r9d, %r10d 	#R10D = Z^3
+imull %edx, %r10d 	#R10D = coefZ * Z^3
+subl %r10d, %eax 	#EAX = coefX * X^5 - coefY * Y^4 - coefZ * Z^3
+
+movq %rbp, %rsp	
+popq %rbp
+ret
+.size computePolynomial, -computePolynomial
+
+#size is in %di, address of array is in %rsi
+findMin:
+pushq %rbp
+movq %rsp, %rbp
+
+movq $0, %r8		#initialize index
+movq $0, $r9d		#initialize minimum value to zero
+movq $0, %rax		#initialize result register
+
+loop1:
+cmpw %r8w, %di		#compare index to size
+je exit1			#exit if equal 
+movw (%rsi, %r8, 2), %r10w	#pull short from array 
+cmpw %r9w, %r10w	#compare short to minimum value 
+cmovl %r10w, %r9w	#if <, minimum = short
+movw %r9w, %ax		#move to result register 
+incq %r8
+jmp loop1
+
+exit1:
+pushq %rdi
+pushq %rsi
+movq $.LC0, %rdi
+movq %rax, %rsi
+call printf
+popq %rsi
+popq %rsi
+movq %rbp, %rsp
+popq %rbp
+ret
+.size findMin, -findMin
+
+sumThirdMembers:
+pushq %rbp
+movq %rsp, %rbp
+movl %edi, %r8d 			
+movq $0, %rdx 				
+movq $0, %rax 				
+
+cmpl %r8d, %edx 		
+jewriteSum 					
+addw 4(%rsi, %rdx, 8), %ax 
+incl %edx 					
+jmp sumLoop
+
+movq $.LC0, %rdi 			
+movw %ax, %si 				
+movq $0, %rax 				
+call printf
+leave
+ret
+

@@ -1,0 +1,307 @@
+#File: lab4.s
+#Created by: Aisha Iftikhar
+#Creation date: 11/14/2018
+
+.file	"lab4.s"
+.section .rodata
+
+.LC0:
+	.string "\nProducts: \n"
+.LC1: 
+	.string "%i \n"
+.LC2:
+	.string "\nSums: \n"
+.LC3:
+	.string "\nElements in intArray1: \n"
+
+.data
+sizeIntArrays:
+	.long 5
+sizeShortArrays:
+	.word 4
+intArray1:
+	.long 10
+	.long 25
+	.long 33
+	.long 48
+	.long 52
+intArray2:
+	.long 20
+	.long -37
+	.long 42
+	.long -61
+	.long -10
+shortArray1:
+	.word 69
+	.word 95
+	.word 107
+	.word 12
+	.word 332
+shortArray2:
+	.word 27
+	.word -87
+	.word 331
+	.word -49
+	.word -88
+
+
+##### MAIN FUNCTION
+.text
+.globl main
+.type main,@function
+
+main:
+pushq %rbp
+movq %rsp, %rbp
+
+#pass parameters and call other functions
+movl sizeIntArrays, %edi	#move size to registers for 1st parameter
+leaq intArray1, %rsi		#load effective address of intArray1 to register rsi
+leaq intArray2, %rdx		#load effective address of intArray2 to register rdx
+call multInts			#call multInts function
+
+movl sizeShortArrays, %edi
+leaq shortArray1, %rsi
+leaq shortArray2, %rdx
+call addShorts
+
+movl sizeIntArrays, %edi
+leaq intArray1, %rsi
+call printArray
+
+movl sizeIntArrays, %edi
+leaq intArray1, %rsi
+call invertArray
+
+movl sizeIntArrays, %edi
+leaq intArray1, %rsi
+call printArray
+
+movq $0, %rax			#return 0 to caller
+
+movq %rbp, %rsp
+popq %rbp
+ret
+.size main,.-main
+
+
+##### MULTINTS
+.globl multInts
+.type multInts,@function
+
+multInts:
+pushq %rbp
+movq %rsp, %rbp
+
+pushq %rdi			#save caller save registers before calling printf
+pushq %rsi
+pushq %rdx
+
+movq $.LC0, %rdi
+movq $0, %rax
+
+call printf
+
+popq %rdx			#restore caller save registers
+popq %rsi
+popq %rdi
+
+#initialize
+movq $0, %r8			#initialize index for array access in caller save reg
+movl $0, %ecx			#initialize caller save result reg
+
+#loop
+loop0:
+cmpl %r8d, %edi			#compare index to size
+je exit0			#exit if equal
+movl (%rsi,%r8,4),%r10d         #Load a long from intArray1 into R10
+movl (%rdx,%r8,4),%r11d         #Load a long from intArray2 into R11
+imull %r11d, %r10d              #R10 *= R11
+movl %r10d, %ecx               
+incq %r8			#increment index
+
+pushq %rsi			#save caller save registers
+pushq %rdx
+pushq %r10
+pushq %r8
+pushq %rdi
+
+movq $.LC1, %rdi		#move to call printf
+movq %rcx, %rsi
+movq $0, %rax
+
+call printf
+
+popq %rdi			#restore caller save registers
+popq %r8
+popq %r10
+popq %rdx
+popq %rsi
+
+jmp loop0			
+
+exit0:				
+movq %rbp, %rsp
+popq %rbp
+ret
+.size multInts,.-multInts
+
+
+##### ADDSHORTS
+.globl addShorts
+.type addShorts,@function
+
+addShorts:
+pushq %rbp
+movq %rsp, %rbp
+
+pushq %rdi			#save caller saved registers before calling printf
+pushq %rsi
+pushq %rdx
+
+movq $.LC2, %rdi
+movq $0, %rax
+
+call printf
+
+popq %rdx			#restore caller saved registers
+popq %rsi
+popq %rdi
+
+#initialize
+movq $0, %r8			#initialize index for array access in caller save reg
+movq $0, %r9			#initialize 2nd index for array access in caller save reg
+movw $0, %cx			#initialize caller save result reg
+
+movw %di, %r9w
+decw %r9w
+
+#loop
+loop2:
+cmpw %r8w, %di			#compare index to size
+je exit2			#exit if equal
+movw (%rsi, %r8, 2),%r10w       #move short from shortArray1 to R10
+movw (%rdx, %r9, 2),%r11w       #move short from shortArray2 to R11
+addw %r11w, %r10w		#R10 += R11
+movw %r10w, %cx			#move result to result register
+incw %r8w			#increment index
+decw %r9w			#decrement index
+
+pushq %rsi			#save caller save registers
+pushq %rdx
+pushq %r10
+pushq %r8
+pushq %r9
+pushq %rdi
+
+movq $.LC1, %rdi		#move to call printf
+movq %rcx, %rsi
+movq $0, %rax
+
+call printf
+
+popq %rdi			#restore caller save registers
+popq %r9
+popq %r8
+popq %r10
+popq %rdx
+popq %rsi
+
+jmp loop2
+
+exit2:
+movq %rbp, %rsp
+popq %rbp
+ret
+.size addShorts,.-addShorts
+
+
+##### INVERTARRAY
+.globl invertArray
+.type invertArray,@function
+
+invertArray:
+pushq %rbp
+movq %rsp, %rbp
+
+#initialize
+movq $0, %r8			#initialize index for array access in caller save reg
+movq $0, %r9			#initialize 2nd index for array access in caller save reg
+
+movl %edi, %r9d
+decl %r9d
+
+#loop
+loop3:
+cmpl %r8d, %r9d			#compare index R8 to index R9
+je exit3			#exit if equal 
+movl (%rsi, %r8, 4), %r10d	#move long from intArray1 to R10
+movl (%rsi, %r9, 4), %r11d	#move long from intArray1 to R11
+movl %r10d, (%rsi, %r9, 4)	#swap
+movl %r11d, (%rsi, %r8, 4)
+incl %r8d			#increment index	
+decl %r9d			#decrement index
+jmp loop3
+
+exit3:
+movq %rbp, %rsp
+popq %rbp
+ret
+.size invertArray,.-invertArray
+
+
+##### PRINTARRAY
+.globl printArray
+.type printArray,@function
+
+printArray:
+pushq %rbp
+movq %rsp, %rbp
+
+#call printf
+pushq %rdi			#save caller save registers before printf
+pushq %rsi
+
+movq $.LC3, %rdi
+movq $0, %rax
+
+call printf
+
+popq %rsi
+popq %rdi
+
+#initialize 
+movq $0, %r8			#initialize index for array access in caller save reg
+movl $0, %ecx			#initialize 8 byte caller save result reg
+
+#loop
+loop4:
+cmpl %r8d, %edi			#compare index to size
+je exit4			#exit if equal
+movl (%rsi,%r8,4),%ecx 		#move long to result register
+incq %r8
+
+pushq %rsi			#save caller save registers
+pushq %r8
+pushq %rdi
+pushq %rax
+
+movq $.LC1, %rdi		#move to call printf
+movq %rcx, %rsi
+movq $0, %rax
+
+call printf
+
+popq %rax
+popq %rdi			#restore caller save registers
+popq %r8
+popq %rsi
+
+jmp loop4
+
+#end loop
+exit4:
+movq %rbp, %rsp
+popq %rbp
+ret
+.size printArray,.-printArray

@@ -1,0 +1,376 @@
+/*
+File: lab3p1.c
+Created by: Aisha Iftikhar
+Creation Date: 9/28/18
+Synopsis: This program will serve as an inventory system for a bookstore. A data file containing information such as title, author, stock number, retail & wholesale quantitiy, and retail & wholesale costs will be read in from the command line. The data will be parsed using the Node typedef structure defined below and stored in a linked list. The user will then be prompted to select from a number of options for what to do with the data, such as print in stock and out of stock books, add or delete a book, etc. When the program terminates, the dynamically allocated nodes will be freed. 
+*/
+
+#include<stdio.h>
+#include<stdlib.h>
+
+/*Structure of Node*/
+struct Data{
+	char title[50]; 
+	char author[50];
+	int stockNumber;
+	float wholesalePrice; 
+	float retailPrice;
+	int wholesaleQuantity; 
+	int retailQuantity;
+};
+typedef struct Node { 
+	struct Data book; 
+	struct Node *next;
+} Node;
+
+/*Function Prototypes*/
+void readInventory(Node **list_head_adr, int *size);
+Node *createNewNode();
+void insert(Node **list_head_adr, Node *newNodePtr);
+void delete(Node **list_head_adr, int stockNumberToDelete, int *size);
+void print(Node *list_head);
+void printInStock(Node **list_head_adr);
+void printOutOfStock(Node  **list_head_adr);
+
+float totalRevenue(Node *list_head);
+float totalWholesaleCost(Node *list_head);
+float currentInvestment(Node *list_head);
+float totalProfit(Node *list_head);
+int totalSales(Node *list_head);
+float averageProfit(Node *list_head);
+void endProgram(Node **list_head_adr);
+
+void userOptions(Node **list_head_adr, int *size);
+
+/*Main*/
+int main(void) {
+	/*Variable Declarations*/
+	Node *list_head = NULL;
+	int sizeOfInventory, *sizePtr;
+	sizeOfInventory = 0;
+	sizePtr  = &sizeOfInventory;
+
+	/*first, read input*/
+	readInventory(&list_head, sizePtr);
+
+	/*print that inventory has been read and how many book titles were read in*/
+	printf("\nThe inventory has been read in. There were %i books in the file.\n", *sizePtr);
+	
+	/*prompt user to select choice*/
+	userOptions(&list_head, sizePtr);
+
+return 0;
+
+}
+
+/*Function Definitions*/
+/*readInventory() calls createNewNode() and insert() to create the linked list*/
+void readInventory(Node **list_head_adr, int *size) {
+	Node *newNodePtr;
+	while(newNodePtr = createNewNode()) {
+		insert(list_head_adr, newNodePtr);
+		(*size)++;
+	}
+}
+
+/*createNewNode() returns a Node* and scans in information from data file*/
+Node *createNewNode() {
+	Node *newNodePtr;
+	newNodePtr = malloc(sizeof(Node));
+	if (newNodePtr == NULL) {
+		/*the storage was not allocated, so print an error message and exit*/
+		printf("\nError!Storage was not allocated. Terminating program...\n");
+		exit(0);
+	} else {
+		scanf("%[^\n]", newNodePtr->book.title);
+		if(strcmp(newNodePtr->book.title, "END_DATA") == 0) {
+			/*free the Node if end of book data detected*/
+			free(newNodePtr);
+			return NULL;	
+		} else {
+			getchar(); /*consume newlines*/
+			scanf("%[^\n]", newNodePtr->book.author);
+			scanf("%i", &newNodePtr->book.stockNumber);
+			scanf("%f", &newNodePtr->book.wholesalePrice);
+			scanf("%f", &newNodePtr->book.retailPrice);
+			scanf("%i", &newNodePtr->book.wholesaleQuantity);
+			scanf("%i", &newNodePtr->book.retailQuantity);
+			getchar();
+		}
+	}
+	return newNodePtr;
+}
+
+/*insert() will insert the created Node in order of stock number*/
+void insert(Node **list_head_adr, Node *newNodePtr) {
+	Node *traversePtr = *list_head_adr;
+	Node *priorNodePtr;
+	/*check if list is empty*/
+	if (traversePtr == NULL) {
+		/*make list_head point to inserted node*/
+		*list_head_adr = newNodePtr;
+		/*make next ptr of inserted node point to NULL*/
+		newNodePtr->next = NULL;
+	/*if list already has one or more nodes*/
+	/*check to see if new node needs to be inserted as the first node*/
+	} else if (newNodePtr->book.stockNumber < traversePtr->book.stockNumber) {
+		/*if so, insert at head*/
+		newNodePtr->next = traversePtr;
+		*list_head_adr = newNodePtr;
+	} else {
+		/*maintain ptr to node before the node where we are*/
+		priorNodePtr = traversePtr;
+		traversePtr = traversePtr->next;
+		/*traverse the list, node by node, to find correct place to insert*/
+		while((traversePtr != NULL) && (newNodePtr->book.stockNumber > traversePtr->book.stockNumber)) {
+			priorNodePtr = traversePtr;
+			traversePtr = traversePtr->next;
+		}
+		/*when correct place is found, change the pointers*/
+		newNodePtr->next = traversePtr;
+		priorNodePtr->next = newNodePtr;
+	}
+}
+
+/*delete() will delete the data associated with the given stock number and adjust the linked list pointers accordingly*/
+void delete(Node **list_head_adr, int stockNumberToDelete, int *size) {
+	Node *traversePtr = *list_head_adr;
+	Node *priorNodePtr;
+	/*check if list is empty*/
+	if(traversePtr == NULL) {
+		printf("\nError! List is empty!\n");
+		return;
+	/*check is node to delete is at the head of the list*/
+	} else if (traversePtr->book.stockNumber == stockNumberToDelete) {
+		*list_head_adr = (*list_head_adr)->next;
+		free(traversePtr);
+		(*size)--;
+		return;
+	/*if the node to delete is not at the head, traverse through the list until it is found*/
+	} else {
+		while (traversePtr->next != NULL) {
+			priorNodePtr = traversePtr;
+			traversePtr = traversePtr->next;
+			/*when node to delete is found, adjust pointers and free node*/
+			if (traversePtr->book.stockNumber == stockNumberToDelete) {
+				priorNodePtr->next = traversePtr->next;
+				free(traversePtr);
+				(*size)--;
+				return;
+			}
+		}
+	}
+	printf("\nError! Book not found!\n");
+}
+
+/*extraneous function used to test - prints all titles imported from data file*/
+void print(Node *list_head) {
+	Node *traversePtr = list_head;
+	while(traversePtr != NULL) {
+		printf("\n%s", traversePtr->book.title);
+		traversePtr = traversePtr->next;
+	}
+	printf("\n");
+}
+
+/*printInStock() prints all books whose wholesaleQuantity > retailQuantity*/
+void printInStock(Node **list_head_adr) {
+	int currentStock, counter;
+	Node *traversePtr = *list_head_adr;
+
+	counter = 0;
+	while (traversePtr != NULL) {
+		currentStock = traversePtr->book.wholesaleQuantity;
+		currentStock -= traversePtr->book.retailQuantity;
+		if (currentStock > 0) {
+			counter++;
+			if (counter == 1) {
+				printf("\nThe following books are in stock:\n");
+			}
+			printf("%d\t%i\t%s\t\t%s\n", currentStock, traversePtr->book.stockNumber, traversePtr->book.author, traversePtr->book.title);
+		}
+		traversePtr = traversePtr->next;
+	}
+	if (counter == 0) {
+		printf("\nNo books are in stock.\n");
+	}
+	printf("\n");
+}
+
+/*printInStock() prints all books which are not in stock*/
+void printOutOfStock(Node **list_head_adr) {
+	int currentStock,  counter;
+	Node *traversePtr = *list_head_adr;
+	
+	counter = 0;
+	while (traversePtr != NULL) {
+		currentStock = traversePtr->book.wholesaleQuantity;
+		currentStock -= traversePtr->book.retailQuantity;
+		if (currentStock <= 0) {
+			counter++;;
+			if(counter == 1) {
+				printf("\nThe following books are out of stock:\n");
+			}
+			printf("%i\t%s\t%s\n", traversePtr->book.stockNumber, traversePtr->book.author, traversePtr->book.title);
+		}
+		traversePtr = traversePtr->next;
+	}
+	if(counter == 0) {
+		printf("\nNo books are out of stock.\n");
+	}
+	printf("\n");
+}
+
+/*function to calculate total revenue*/
+float totalRevenue(Node *list_head){
+	float total = 0.0;
+	Node *traversePtr = list_head;
+
+	while (traversePtr != NULL) {
+		total += (traversePtr->book.retailPrice) * (traversePtr->book.retailQuantity);
+		traversePtr = traversePtr->next;
+	}
+	return total;
+}
+
+/*function to calculate total wholesale cost*/
+float totalWholesaleCost(Node *list_head){
+	float total = 0.0;
+	Node *traversePtr = list_head;
+	
+	while (traversePtr != NULL) {
+		total += (traversePtr->book.wholesalePrice) * (traversePtr->book.wholesaleQuantity);
+		traversePtr = traversePtr->next;
+	}
+	return total;
+}
+
+/*function to calculate current investment in books*/
+float currentInvestment(Node *list_head){
+	float total = 0.0;
+	Node *traversePtr = list_head;
+	
+	while (traversePtr != NULL) {
+		total += (traversePtr->book.wholesalePrice) * ((traversePtr->book.wholesaleQuantity)-(traversePtr->book.retailQuantity));
+		traversePtr = traversePtr->next;
+	}
+	return total;
+}
+
+/*function to calculate total profit*/
+float totalProfit(Node *list_head){
+	float total = 0.0;
+	total = totalRevenue(list_head)-totalWholesaleCost(list_head)+currentInvestment(list_head);
+	return total;
+}
+
+/*function to calculate total sales*/
+int totalSales(Node *list_head){
+	int total = 0;
+	Node *traversePtr = list_head;
+	
+	while(traversePtr != NULL) {
+		total += (traversePtr->book.retailQuantity);
+		traversePtr = traversePtr->next;
+	}
+	return total;
+}
+
+/*function to calculate average profit per book*/
+float averageProfit(Node *list_head){
+	float total = 0.0;
+	total = totalProfit(list_head)/totalSales(list_head);
+	return total;
+}
+
+/*endProgram() traverses through the list and frees all nodes*/
+void endProgram(Node **list_head_adr) {
+	Node *traversePtr = *list_head_adr;
+	Node *priorNodePtr;
+	while (traversePtr != NULL){
+		priorNodePtr = traversePtr;
+		traversePtr = traversePtr->next;
+		free(priorNodePtr);
+	}
+	printf("\nHave a nice day!\n");
+	return;
+}
+
+/*function used to define and determine user options and input*/
+void userOptions(Node **list_head_adr, int *size) {
+	int choice, stockNumberToDelete;
+	Node *newNodePtr = NULL;
+	
+	while(choice != 11) {
+		printf("\nPlease choose from the following options:\n");
+		printf("1. Print total revenue\n");
+		printf("2. Print total wholesale cost\n");
+		printf("3. Print current investment\n");
+		printf("4. Print total profit\n");
+		printf("5. Print total number of sales\n");
+		printf("6. Print average profit per sale\n");
+		printf("7. Print books in stock\n");
+		printf("8. Print books out of stock\n");
+		printf("9. Add a book\n");
+		printf("10. Delete a book\n");
+		printf("11. Exit program\n");
+		printf("Enter your choice: ");
+		scanf(" %i", &choice);
+
+		/*switch statement used to call appropriate functions and print output*/
+		switch(choice) {
+			case 1:
+				printf("\nTotal revenue: $%.2f\n", totalRevenue(*list_head_adr));
+				break;
+			case 2:
+				printf("\nTotal wholesale cost: $%.2f\n", totalWholesaleCost(*list_head_adr));
+				break;
+			case 3:
+				printf("\nCurrent Investment in books: $%.2f\n", currentInvestment(*list_head_adr));
+				break;
+			case 4:
+				printf("\nTotal profit: $%.2f\n", totalProfit(*list_head_adr));
+				break;
+			case 5:
+				printf("\nTotal number of sales: %i\n", totalSales(*list_head_adr));
+				break;
+			case 6:
+				printf("\nAverage profit per sale: $%.2f\n", averageProfit(*list_head_adr));
+				break;
+			case 7:
+				if(*size == 0) {
+					printf("\nThere are no books in the inventory.\n");
+				} else {
+					printInStock(list_head_adr);
+				}
+				break;
+			case 8:
+				if(*size == 0) {
+					printf("\nThere are no books in the inventory.\n");
+				} else {
+					printOutOfStock(list_head_adr);
+				}
+				break;
+			case 9:
+				printf("\nPlease enter the data for a single book: \n");
+				getchar();
+				newNodePtr = createNewNode();
+				insert(list_head_adr, newNodePtr);
+				(*size)++;
+				printf("%s was added. There are %i books in the inventory.\n", newNodePtr->book.title, *size);
+				break;
+			case 10:
+				printf("\nEnter stock number of book to delete: ");
+				scanf("%i", &stockNumberToDelete);
+				delete(list_head_adr, stockNumberToDelete, size);
+				printf("\n");
+				break;
+			case 11:
+				endProgram(list_head_adr);
+				break;
+			default:
+				printf("\nUnknown error\n");
+				break;
+		}
+	}
+}

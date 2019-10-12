@@ -1,0 +1,56 @@
+/*
+File: lab1p1.c
+Created by: Aisha Iftikhar
+Creation date: 9/7/18
+Synopsis: This program will read in a list of floats as characters using getchar() and convert the char input to a numeric float. The floats will be printed with 5 digits of precision, and at the end, the total sum will be printed. 
+*/
+
+#include <stdio.h>
+
+int main(void){
+	/*variable declarations*/
+	int number;
+	int i;
+	double total = 0.0;
+
+	/*instructions*/
+	printf("Input an integer which specifies the number of remaining lines of input. In each line after the first, enter a single positive floating point number, making sure to hit return after each number.\n");
+
+	/*Prompt for amount of floats to add
+	printf("How many numbers will be entered? "); */
+	scanf("%d\n",&number);
+
+	/*iterates through each number*/
+	for(i = 0; i < number ; i++){ 
+
+		double value = 0.0; /*value contains the float for each line and resets during each iteration of the for loop*/
+		double j = 1.0; /*used to determine place of number*/
+		char input; /*used to store the character read by getchar()*/
+		
+		/*while loop continues to run until it reads a new line or a space*/
+		while((input = getchar()) != '\n') {
+			/*if we've reached the decimal point*/
+			if (input == '.'){
+				j = 0.1;
+			} else {
+				/*j is only equal to 1 before the decimal point*/
+				if (j==1){
+					value *= 10;
+					/*convert chars to double using ASCII codes*/
+					value += input - '0';
+				} else {
+					value += (input - '0') * j;
+					j /= 10;
+				}
+			}
+		}
+		/*update the totals and print the value for each line*/
+		total = total + value; 
+		printf("%.5f\n", value);
+	}
+	/*print totals*/
+	printf("Total is:%.5f\n", total);
+	
+return 0;
+
+}

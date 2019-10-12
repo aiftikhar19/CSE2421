@@ -1,0 +1,98 @@
+/*
+File: lab1p2.c
+Created by: Aisha Iftikhar
+Creation date: 9/10/18
+Synopsis: This program simulates a game of rock, paper, scissors with the user as one player and the computer as the other. The user is prompted to input R, P, S, or Q to quit, and the computer play is then randomly generated. Each play is outputted, and the winner is announced. The game will continue until the user inputs 'q' or 'Q' to quit. 
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+int main (void) {
+	/*variable declarations*/
+	char input;
+	int compNumber; /*stores random number generated for computer choice*/
+	enum options{ROCK = 1, PAPER = 2, SCISSORS = 3};
+	enum options userChoice, compChoice;
+	srand(time(NULL));
+	
+	/*print game instructions*/
+	printf("Welcome to rock, paper, scissors! To play, you'll need to input 'R' for rock, 'P' for paper, or 'S' for scissors (This is not case sensitive). If you enter an invalid input, you'll get a warning. You can also enter 'Q' to quit.\n");
+	
+	/*initial input*/
+	printf("\nEnter (r)ock, (p)aper, or (s)cissors. Enter (q) to quit.");
+	scanf("%c", &input);
+
+	/*do while will always run at least once*/
+	do {
+		/*check for invalid input*/
+		while(input!='R' && input!='r' && input!='P' && input!='p' && input!='S' && input!='s' && input!='Q' && input!='q') {
+	        	printf("\nInvalid entry! Please enter (r)ock, (p)aper, or (s)cissors. Enter (q) to quit.");
+	        	scanf(" %c", &input);
+		}
+		
+		/*Quit the game if necessary*/
+        	if(input=='q' || input=='Q') {
+        		return 0;
+        	}
+			
+	   	/*find out what case was chosen by the user and print*/
+		switch(input) {
+			case 'r':
+			case 'R':
+				userChoice = ROCK;
+				printf("\nUser chose: Rock\n");
+				break;
+			case 'p':
+			case 'P':
+				userChoice = PAPER;
+				printf("\nUser chose: Paper\n");
+				break;
+			case 's':
+			case 'S':
+				userChoice = SCISSORS;
+				printf("\nUser chose: Scissors\n");
+				break;
+			default:
+				break;
+		}
+		
+		/*generate computer random number*/
+		compNumber = rand()%3 + 1;
+		/*convert number to the computer choice and print*/
+		switch(compNumber) {
+			case 1:
+				compChoice = ROCK;
+				printf("\nComputer chose: Rock\n");
+				break;
+			case 2:
+				compChoice = PAPER;
+				printf("\nComputer chose: Paper\n");
+				break;
+			case 3:
+				compChoice = SCISSORS;
+				printf("\nComputer chose: Scissors\n");
+				break;
+			default:
+				break;
+		}
+		
+		/*determine who won*/
+		if(userChoice==compChoice) {
+			printf("\nCongratulations, you tied!\n");
+		} else if (userChoice==ROCK && compChoice!=PAPER || userChoice==PAPER && compChoice!=SCISSORS || userChoice==SCISSORS && compChoice != ROCK) {
+			printf("\nCongratulations, the user wins!\n");
+		} else {
+			printf("\nCongratulations, the computer wins!\n");
+		}
+		
+		/*prompt for new input*/
+    	printf("\nEnter (r)ock, (p)aper, or (s)cissors. Enter (q) to quit.");
+        scanf(" %c", &input);
+	
+	} while (input!='Q' || input!='q');
+
+return 0;
+
+}

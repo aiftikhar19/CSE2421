@@ -1,0 +1,207 @@
+/*
+File: lab2.c
+Created by: Aisha Iftikhar
+Creation date: 9/19/18
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+
+/*Function Declarations*/
+int getNumDataSets();
+void allocateDataSets(float ***dataSetsPtrPtr, int **dataSetSizesPtr, int numDataSets);
+void calculation (float ***dataSetsPtrPtr, int **dataSetSizesPtr, int numDataSets);
+float max (float *arr, int size);
+float min (float *arr, int size);
+float sum (float *arr, int size);
+float average (float *arr, int size);
+void print (int n, float *arr, int size);
+int cmpfunc (const void * a, const void * b);
+void sort(int n, float *arr, int size);
+void close(float ***dataSetsPtrPtr, int **dataSetSizesPtr, int numDataSets);
+
+/*Main*/
+int main (void) {
+	/*variable declarations*/
+	float **dataSetsPtr = NULL;
+	int *dataSetSizes = NULL;
+	int numDataSets = 0;
+	
+	/*prompt user to enter the number of data sets*/
+	numDataSets = getNumDataSets();
+	
+	/*call allocateDataSets*/
+	allocateDataSets(&dataSetsPtr, &dataSetSizes, numDataSets);
+
+	/*complete calculations*/
+	calculation(&dataSetsPtr, &dataSetSizes, numDataSets);
+		
+return 0;
+
+}
+
+/*Function Definitions*/
+/*getNumDataSets will prompt the user to input the number of data sets*/
+int getNumDataSets() {
+	int numDataSets;
+	printf("How many data sets will you enter? ");
+	scanf("%d", &numDataSets);
+	while (numDataSets < 1) {
+		printf("\nInvalid entry! Enter a positive number of data sets: ");
+		scanf("%d", &numDataSets);
+	}
+	return numDataSets;
+}
+
+/*allocateDataSet will dynamically create arrays to store the data set sizes and data set values*/
+void allocateDataSets(float ***dataSetsPtrPtr, int **dataSetSizesPtr, int numDataSetsPtr) {
+	int i = 0, j = 0;
+	int size = 0;
+	float *ptr = NULL;
+	printf("\nPlease enter the size of each data set first, then enter each number seperated by a space. Once you've entered every value, hit return, and follow this procedure until all the data sets have been entered.\n");
+
+	*dataSetsPtrPtr = (float**)malloc(numDataSetsPtr * sizeof(float*));
+	*dataSetSizesPtr = (int*)malloc(numDataSetsPtr * sizeof(int));
+
+	for (i = 0; i < numDataSetsPtr; i++) {
+		scanf(" %d", &size);
+		(*(*dataSetSizesPtr + i)) = size;
+		ptr = (float*)malloc(size * sizeof(float));
+		for (j = 0; j < size; j++) {
+			scanf(" %f", &ptr[j]);
+		}
+		(*(*dataSetsPtrPtr + i)) = ptr;
+	}
+}
+
+/*A call to the calculation function will run through the list of possible functions to perform with the data sets*/
+void calculation (float ***dataSetsPtrPtr, int **dataSetSizesPtr, int numDataSets){
+	int choice = 0;
+	int set = 0;
+	/*repeatedly prompt the user to enter what data set they'd like to perform function on and which function to perform*/
+	while(choice!=7){
+		printf("\nEnter the number of the data set on which you wish to do calculations: ");
+		scanf(" %d", &set);
+		while(set > numDataSets) {
+			printf("\nInvalid Entry! Please try again: ");
+			scanf(" %d", &set);
+		}
+
+		printf("\nWhat function would you like to perform?\n");
+		printf("1) Find the minimum value.\n");
+		printf("2) Find the maximum value.\n");
+		printf("3) Calculate the sum of all the values.\n");
+		printf("4) Calculate the average of all the values.\n");
+		printf("5) Print the values in the data set.\n");
+		printf("6) Sort the data set.\n");
+		printf("7) Exit the program.\n");
+		printf("\nEnter your choice: ");
+		scanf(" %d", &choice);
+		while(choice < 1 || choice > 7) {
+			printf("\nInvalid entry! Please enter one of the choices listed: ");
+			scanf(" %d", &choice);
+		}
+	
+		/*this switch statement executes each function based on user input*/
+		switch(choice) {
+			case 1:
+				printf("The minimum value in data set %d is: %.3f\n", set, min((*(*dataSetsPtrPtr +(set - 1))),(*(*dataSetSizesPtr + (set - 1)))));
+				break;
+			case 2:
+				printf("The maximum value in data set %d is: %.3f\n", set, max((*(*dataSetsPtrPtr +(set - 1))),(*(*dataSetSizesPtr + (set - 1)))));
+				break;
+			case 3:
+				printf("The sum of values in data set %d is: %.3f\n", set, sum((*(*dataSetsPtrPtr +(set - 1))),(*(*dataSetSizesPtr + (set - 1)))));
+				break;
+			case 4:
+				printf("The average of values in data set %d is: %.3f\n", set, average((*(*dataSetsPtrPtr +(set - 1))),(*(*dataSetSizesPtr + (set - 1)))));
+				break;
+			case 5:
+				print(set, (*(*dataSetsPtrPtr + (set - 1))), (*(*dataSetSizesPtr + (set - 1))));
+				break;
+			case 6:
+				sort(set, (*(*dataSetsPtrPtr + (set - 1))), (*(*dataSetSizesPtr + (set - 1))));
+				break;
+			case 7:
+				close(dataSetsPtrPtr, dataSetSizesPtr, numDataSets);
+				break;
+			default:
+				break;
+		}
+	}
+}
+
+/*max will return the maximum value of each data set*/
+float max (float *arr, int size) {
+	float max = *(arr + 0);
+	int i = 0;
+	for (i = 1; i < size; i++) {
+		if (*(arr + i) > max) {
+			max = *(arr + i);
+		}
+	}
+	return max;
+}
+
+/*min will return the minumum number in each data set*/
+float min (float *arr, int size) {
+	float min = *(arr + 0);
+	int i = 0;
+	for (i = 1; i < size; i++) {
+		if (*(arr + i) < min) {
+			min = *(arr + i);
+		}
+	}
+	return min;
+}
+
+/*sum will return the sum of every number in the data set*/
+float sum (float *arr, int size) {
+	float total = 0;
+	int i = 0;
+	for (i = 0; i < size; i++) {
+		total += *(arr + i);
+	}
+	return total;
+}
+
+/*average will return the average for all numbers in the data set*/
+float average (float *arr, int size) {
+	float avg = sum(arr, size)/size;
+	return avg;
+}
+
+/*print will print out the numbers in each data set*/
+void print (int n, float *arr, int size) {
+	int i = 0;
+	printf("Data set %d:\n", n);
+	for (i = 0; i < size; i++) {
+		printf("%.3f\t", *(arr + i));
+	}
+	printf("\n");
+}
+
+/*this function is used to compare two numbers and is used for the sort function below*/
+int cmpfunc (const void * a, const void * b) {
+   return ( *(int*)a - *(int*)b );
+}
+
+/*the sort function sorts in ascending order using C built in qsort function*/
+void sort(int n, float *arr, int size) {
+	qsort(arr, size, sizeof(float), cmpfunc);
+	print(n, arr, size);
+}
+
+/*close will de-allocate all arrays in the function and exit the program*/
+void close(float ***dataSetsPtrPtr, int **dataSetSizesPtr, int numDataSets) {
+	int i = 0;
+	for (i = 0; i < numDataSets; i++) {
+		free(*(*dataSetsPtrPtr + i));
+	}
+	free(*dataSetsPtrPtr);
+	*dataSetsPtrPtr = NULL;
+	free(*dataSetSizesPtr);
+	*dataSetSizesPtr = NULL;
+	printf("\nHave a nice day!\n");
+	exit(0);
+}
